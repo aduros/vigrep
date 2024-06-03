@@ -4,6 +4,7 @@ import { program } from 'commander'
 import { filter } from './filter'
 import sharp from 'sharp'
 import OpenAI from 'openai'
+import pLimit from 'p-limit'
 
 program
   .name('vigrep')
@@ -36,32 +37,39 @@ program
     const { model, threshold, null: printNull, filesWithoutMatch } = opts
     const openai = new OpenAI()
 
-    // TODO(2024-06-02): Limit concurrency
+    // Limit concurrency to avoid hitting resource limits
+    const transcodeLimit = pLimit(8)
+    const overallLimit = pLimit(50)
+
     await Promise.all(
-      inputFiles.map(async (inputFile) => {
-        const image = await sharp(inputFile)
-          .resize({
-            width: 512,
-            height: 512,
-            fit: 'inside',
-            withoutEnlargement: true,
+      inputFiles.map((inputFile) =>
+        overallLimit(async () => {
+          const image = await transcodeLimit(() =>
+            sharp(inputFile)
+              .resize({
+                width: 512,
+                height: 512,
+                fit: 'inside',
+                withoutEnlargement: true,
+              })
+              .webp({
+                effort: 0,
+              })
+              .toBuffer(),
+          )
+          const result = await filter({
+            image,
+            imageType: 'image/webp',
+            query,
+            openai,
+            model,
           })
-          .webp({
-            effort: 0,
-          })
-          .toBuffer()
-        const result = await filter({
-          image,
-          imageType: 'image/webp',
-          query,
-          openai,
-          model,
-        })
-        if (result.confidence >= threshold === !filesWithoutMatch) {
-          process.stdout.write(inputFile)
-          process.stdout.write(printNull ? '\0' : '\n')
-        }
-      }),
+          if (result.confidence >= threshold === !filesWithoutMatch) {
+            process.stdout.write(inputFile)
+            process.stdout.write(printNull ? '\0' : '\n')
+          }
+        }),
+      ),
     )
   })
 
