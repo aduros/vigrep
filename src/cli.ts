@@ -30,7 +30,7 @@ program
   .argument('[files...]', 'Input image files')
 
   .action(async (query: string, inputFiles: string[], opts) => {
-    const { model, threshold, null: printNull } = opts
+    const { model, threshold, null: printNull, filesWithoutMatch } = opts
     const openai = new OpenAI()
 
     // TODO(2024-06-02): Limit concurrency
@@ -54,7 +54,7 @@ program
           openai,
           model,
         })
-        if (result.confidence > threshold) {
+        if (result.confidence >= threshold === !filesWithoutMatch) {
           process.stdout.write(inputFile)
           process.stdout.write(printNull ? '\0' : '\n')
         }
