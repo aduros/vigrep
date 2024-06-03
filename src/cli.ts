@@ -7,6 +7,9 @@ import OpenAI from 'openai'
 
 program
   .name('vigrep')
+  .description(
+    'Grep for image files using GPT-4o Vision.\n\nMore info: https://github.com/aduros/vigrep',
+  )
   .option('--model <model>', 'OpenAI model to use', 'gpt-4o')
   .option(
     '-t, --threshold <threshold>',
