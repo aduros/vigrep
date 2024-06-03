@@ -1,2 +1,2 @@
 export { filter } from './filter'
-export type { FilterOptions } from './filter'
+export type { FilterOptions, FilterResult } from './filter'

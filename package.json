@@ -13,7 +13,7 @@
     "build": "tsup src/index.ts src/cli.ts --format esm --sourcemap --dts",
     "prepack": "npm run build -- --clean",
     "prepare": "husky install",
-    "release": "bump --commit --tag --push package.json package-lock.json public/manifest.json",
+    "release": "bump --commit --tag --push",
     "start": "npm run build -- --watch",
     "test": "jest",
     "test:lint": "eslint .",
